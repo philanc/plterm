@@ -66,8 +66,7 @@ restoremode(mode)  -- restore a mode saved by savemode()
 
 A small (and crude!) fileviewer is proposed as an example. See `example/viewfile.lua`.
 
-Usage:
-	lua viewfile.lua filename`
+Usage: 	`lua viewfile.lua filename`
 
 ### License
 
