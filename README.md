@@ -16,9 +16,11 @@ This module was initially developed for  [PLE](https://github.com/philanc/ple), 
 
 ### Dependencies
 
+The module is written for and tested with Lua 5.3. It should work with Lua 5.2 but not with older versions (it uses a 'goto' in the input function).
+
 The module does not use any other external library.  The only dependency is the Unix command `stty` which is used to set the terminal in raw mode (so that keys can be read one at a time when they are pressed).
 
-### plterm functions
+### Functions
 
 ```
 clear()     -- clear screen

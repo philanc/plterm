@@ -289,7 +289,7 @@ term.rawinput = function()
 end--rawinput()
 
 term.getcurpos = function()
-	-- return current cursor position (line, coloumn as integers)
+	-- return current cursor position (line, column as integers)
 	--
 	outf("\027[6n") -- report cursor position. answer: esc[n;mR
 	local c, i = 0, 0
