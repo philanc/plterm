@@ -70,5 +70,5 @@ Usage: 	`lua viewfile.lua filename`
 
 ### License
 
-This code is published under a BSD license. Feel free to fork!
+This code is published under a MIT license. Feel free to fork!
 
