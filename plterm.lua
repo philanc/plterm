@@ -94,10 +94,10 @@ term={ -- the plterm module
 	clear = function() out("\027[2J") end,
 	cleareol = function() out("\027[K") end,
 	golc = function(l,c) out("\027[",l,";",c,"H") end,
-	up = function(n) out("\027[",n or 1,";","A") end,
-	down = function(n) out("\027[",n or 1,";","B") end,
-	right = function(n) out("\027[",n or 1,";","C") end,
-	left = function(n) out("\027[",n or 1,";","D") end,
+	up = function(n) out("\027[",n or 1,"A") end,
+	down = function(n) out("\027[",n or 1,"B") end,
+	right = function(n) out("\027[",n or 1,"C") end,
+	left = function(n) out("\027[",n or 1,"D") end,
 	color = function(f,b,m) 
 	    if m then out("\027[",f,";",b,";",m,"m")
 	    elseif b then out("\027[",f,";",b,"m")
