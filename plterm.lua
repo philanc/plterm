@@ -1,4 +1,4 @@
--- Copyright (c) 2016  Phil Leblanc  -- see LICENSE file
+-- Copyright (c) 2018 Phil Leblanc  -- see LICENSE file
 
 ------------------------------------------------------------------------
 --[[  
