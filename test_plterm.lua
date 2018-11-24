@@ -77,11 +77,29 @@ local function test_ansi()
 	outf"up 1 and left 17"
 	
 	-- done
-	term.golc(18,1)
+	golc(18,1)
 	outf "test_ansi() OK.   "
 --~ 	term.setsanemode()
 	term.restoremode(mode)
 
 end --test_ansi
 
+local function test_input()
+	mode = term.savemode()
+	term.setrawmode() -- required to enable getcurpos()
+	local readkey = term.input()
+	while true do
+		golc(16,1); outf"type a key ('q' to quit): "
+		local code = readkey()
+		golc(16, 30); term.cleareol()
+		outf("key is " .. term.keyname(code))
+		if code == byte'q' then break end
+	end
+	golc(19,1)
+	outf "test_input() OK.   "
+	term.restoremode(mode)
+	
+end --test_input
+
 test_ansi()
+test_input()
