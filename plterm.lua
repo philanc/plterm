@@ -18,10 +18,10 @@ up(n)
 down(n)
 right(n)
 left(n)     -- move the cursor by n positions (default to 1)
-color(f, b, m)
+color(f, b, m)  
             -- change the color used to write characters
-			   (foreground color, background color, modifier)
-			   see term.colors
+		(foreground color, background color, modifier)
+		see term.colors
 hide()
 show()      -- hide or show the cursor
 save()
@@ -29,17 +29,17 @@ restore()   -- save and restore the position of the cursor
 reset()     -- reset the terminal (colors, cursor position)
 
 input()     -- input iterator (coroutine-based)
-		       return a "next key" function that can be iteratively called 
-			   to read a key (escape sequences returned by function keys 
-			   are parsed)
+		return a "next key" function that can be iteratively called 
+		to read a key (escape sequences returned by function keys 
+		are parsed)
 rawinput()  -- same, but escape sequences are not parsed.
 getcurpos() -- return the current position of the cursor
 getscrlc()  -- return the dimensions of the screen 
                (number of lines and columns)
 keyname()   -- return a printable name for any key
-               - key names in term.keys for function keys,
-			   - control characters are represented as "^A"
-			   - the character itself for other keys
+		- key names in term.keys for function keys,
+		- control characters are represented as "^A"
+		- the character itself for other keys
 
 tty mode management functions
 
