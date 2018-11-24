@@ -86,7 +86,7 @@ end
 -- based on public domain code by Luiz Henrique de Figueiredo 
 -- http://lua-users.org/lists/lua-l/2009-12/msg00942.html
 
-term={ -- the plterm module
+local term={ -- the plterm module
 
 	out = out,
 	outf = outf,
