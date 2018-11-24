@@ -207,6 +207,9 @@ local seq = {
 	['[[D'] = keys.kf4,  --linux
 	['[[E'] = keys.kf5,  --linux
 
+	['OH'] = keys.khome, --vte
+	['OF'] = keys.kend,  --vte
+	
 }
 
 local getcode = function() return byte(io.read(1)) end
