@@ -348,7 +348,6 @@ end
 term.savemode = function()
 	local fh = io.popen(stty .. " -g")
 	local mode = fh:read('a')
-	print(mode)
 	local succ, e, msg = fh:close()
 	return succ and mode or nil, e, msg
 end

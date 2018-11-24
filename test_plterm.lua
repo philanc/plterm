@@ -13,7 +13,6 @@ test plterm - Pure Lua ANSI Terminal functions - unix only
 local strf = string.format
 local byte, char, rep = string.byte, string.char, string.rep
 local app, concat = table.insert, table.concat
-local yield = coroutine.yield
 
 local repr = function(x) return strf("%q", tostring(x)) end
 
@@ -31,9 +30,6 @@ local colors = term.colors
 local function test_ansi()
 	local l, c, mode
 
-	mode = term.savemode()
-	term.setrawmode() -- required to enable getcurpos()
-	
 	term.clear()
 	term.golc(1,1)
 	outf("[1,1]")
@@ -58,9 +54,11 @@ local function test_ansi()
 	outf"[5,10]restored"
 	
 	-- getcurpos
+	mode = term.savemode()
+	term.setrawmode() -- required to enable getcurpos()
 	golc(12, 30)
 	l, c = term.getcurpos()
-	golc(11,30); outf"next line should be [12,30]"
+	golc(11,30); outf"getcurpos(): next line should be [12,30]"
 	golc(12,30); outf(strf("[%d,%d]" , l, c))
 	
 	-- golc beyond limits
@@ -68,7 +66,11 @@ local function test_ansi()
 	l, c = term.getcurpos()
 	golc(13, 30)
 	outf(strf("bottom right is [%d,%d]", l, c))
+	golc(14, 30)
+	l, c = term.getscrlc()
+	outf(strf("getscrlc(): number of lines, col [%d,%d]", l, c))
 	
+	golc(14, 1); term.right(29)
 	term.down(999)
 	outf"down to last line"
 	term.up(); term.left(17)
@@ -81,6 +83,5 @@ local function test_ansi()
 	term.restoremode(mode)
 
 end --test_ansi
-
 
 test_ansi()
