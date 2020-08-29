@@ -76,12 +76,6 @@ local function outf(...)
 	io.write(...); io.flush()
 end
 
-local function outdbg(x, sep) 
-	out(repr(x):sub(2, -2))
-	if sep then out(sep) end
-	io.flush() 
-end
-
 -- following definitions (from term.clear to term.restore) are
 -- based on public domain code by Luiz Henrique de Figueiredo 
 -- http://lua-users.org/lists/lua-l/2009-12/msg00942.html
@@ -90,7 +84,6 @@ local term={ -- the plterm module
 
 	out = out,
 	outf = outf,
-	outdbg = outdbg,
 	clear = function() out("\027[2J") end,
 	cleareol = function() out("\027[K") end,
 	golc = function(l,c) out("\027[",l,";",c,"H") end,

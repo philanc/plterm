@@ -15,7 +15,7 @@ local repr = function(x) return strf("%q", tostring(x)) end
 local max = function(x, y) if x < y then return y else return x end end 
 local min = function(x, y) if x < y then return x else return y end end 
 
-local out, outf, outdbg = term.out, term.outf, term.outdbg
+local out, outf = term.out, term.outf
 local go, cleareol, color = term.golc, term.cleareol, term.color
 local col, keys = term.colors, term.keys
 
