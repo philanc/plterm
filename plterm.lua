@@ -1,12 +1,12 @@
 -- Copyright (c) 2018 Phil Leblanc  -- see LICENSE file
 
 ------------------------------------------------------------------------
---[[  
+--[[
 
 plterm - Pure Lua ANSI Terminal functions - unix only
 
-This module assumes the tty is in raw mode. 
-It provides functions based on stty (so available on unix) 
+This module assumes the tty is in raw mode.
+It provides functions based on stty (so available on unix)
 to save, set and restore tty modes.
 
 Module functions:
@@ -18,7 +18,7 @@ up(n)
 down(n)
 right(n)
 left(n)     -- move the cursor by n positions (default to 1)
-color(f, b, m)  
+color(f, b, m)
             -- change the color used to write characters
 		(foreground color, background color, modifier)
 		see term.colors
@@ -29,12 +29,12 @@ restore()   -- save and restore the position of the cursor
 reset()     -- reset the terminal (colors, cursor position)
 
 input()     -- input iterator (coroutine-based)
-		return a "next key" function that can be iteratively called 
-		to read a key (escape sequences returned by function keys 
+		return a "next key" function that can be iteratively called
+		to read a key (escape sequences returned by function keys
 		are parsed)
 rawinput()  -- same, but escape sequences are not parsed.
 getcurpos() -- return the current position of the cursor
-getscrlc()  -- return the dimensions of the screen 
+getscrlc()  -- return the dimensions of the screen
                (number of lines and columns)
 keyname()   -- return a printable name for any key
 		- key names in term.keys for function keys,
@@ -51,7 +51,7 @@ restoremode(mode)  -- restore a mode saved by savemode()
 License: BSD
 https://github.com/philanc/plterm
 
--- just in case, a good ref on ANSI esc sequences:   
+-- just in case, a good ref on ANSI esc sequences:
 https://en.wikipedia.org/wiki/ANSI_escape_code
 (in the text, "CSI" is "<esc>[")
 
@@ -59,25 +59,19 @@ https://en.wikipedia.org/wiki/ANSI_escape_code
 
 -- some local definitions
 
-local strf = string.format
-local byte, char, rep = string.byte, string.char, string.rep
-local app, concat = table.insert, table.concat
-local yield = coroutine.yield
-
-local repr = function(x) return strf("%q", tostring(x)) end
-
+local byte, char, yield = string.byte, string.char, coroutine.yield
 
 ------------------------------------------------------------------------
 
 local out = io.write
 
-local function outf(...) 
+local function outf(...)
 	-- write arguments to stdout, then flush.
 	io.write(...); io.flush()
 end
 
 -- following definitions (from term.clear to term.restore) are
--- based on public domain code by Luiz Henrique de Figueiredo 
+-- based on public domain code by Luiz Henrique de Figueiredo
 -- http://lua-users.org/lists/lua-l/2009-12/msg00942.html
 
 local term={ -- the plterm module
@@ -91,10 +85,10 @@ local term={ -- the plterm module
 	down = function(n) out("\027[",n or 1,"B") end,
 	right = function(n) out("\027[",n or 1,"C") end,
 	left = function(n) out("\027[",n or 1,"D") end,
-	color = function(f,b,m) 
+	color = function(f,b,m)
 	    if m then out("\027[",f,";",b,";",m,"m")
 	    elseif b then out("\027[",f,";",b,"m")
-	    else out("\027[",f,"m") end 
+	    else out("\027[",f,"m") end
 	end,
 	-- hide / show cursor
 	hide = function() out("\027[?25l") end,
@@ -109,7 +103,7 @@ local term={ -- the plterm module
 term.colors = {
 	default = 0,
 	-- foreground colors
-	black = 30, red = 31, green = 32, yellow = 33, 
+	black = 30, red = 31, green = 32, yellow = 33,
 	blue = 34, magenta = 35, cyan = 36, white = 37,
 	-- backgroud colors
 	bgblack = 40, bgred = 41, bggreen = 42, bgyellow = 43,
@@ -154,7 +148,7 @@ local keys = term.keys
 --special chars (for parsing esc sequences)
 local ESC, LETO, LBR, TIL= 27, 79, 91, 126  --  esc, [, ~
 
-local isdigitsc = function(c) 
+local isdigitsc = function(c)
 	-- return true if c is the code of a digit or ';'
 	return (c >= 48 and c < 58) or c == 59
 end
@@ -202,7 +196,7 @@ local seq = {
 
 	['OH'] = keys.khome, --vte
 	['OF'] = keys.kend,  --vte
-	
+
 }
 
 local getcode = function() return byte(io.read(1)) end
@@ -218,9 +212,9 @@ term.input = function()
 		while true do
 			c = getcode()
 			if c ~= ESC then -- not a seq, yield c
-				yield(c) 
+				yield(c)
 				goto continue
-			end 
+			end
 			c1 = getcode()
 			if c1 == ESC then -- esc esc [ ... sequence
 				yield(ESC)
@@ -236,7 +230,7 @@ term.input = function()
 			if c2 == LBR then -- esc[[x sequences (F1-F5 in linux console)
 				s = s .. char(getcode())
 			end
-			if seq[s] then 
+			if seq[s] then
 				yield(seq[s])
 				goto continue
 			end
@@ -247,7 +241,7 @@ term.input = function()
 			while true do
 				ci = getcode()
 				s = s .. char(ci)
-				if ci == TIL then 
+				if ci == TIL then
 					if seq[s] then
 						yield(seq[s])
 						goto continue
@@ -279,7 +273,7 @@ term.rawinput = function()
 		local c
 		while true do
 			c = getcode()
-			yield(c) 
+			yield(c)
 		end
 	end)--coroutine
 end--rawinput()
@@ -288,7 +282,7 @@ term.getcurpos = function()
 	-- return current cursor position (line, column as integers)
 	--
 	outf("\027[6n") -- report cursor position. answer: esc[n;mR
-	local c, i = 0, 0
+	local i, c = 0
 	local s = ""
 	c = getcode(); if c ~= ESC then return nil end
 	c = getcode(); if c ~= LBR then return nil end
@@ -315,7 +309,7 @@ term.getscrlc = function()
 end
 
 term.keyname = function(c)
-	for k, v in pairs(keys) do 
+	for k, v in pairs(keys) do
 		if c == v then return k end
 	end
 	if c < 32 then return "^" .. char(c+64) end
@@ -330,7 +324,7 @@ end
 
 -- use the following to define a non standard stty location
 -- eg.:  stty = "/opt/busybox/bin/stty"
--- 
+--
 local stty = "stty" -- use the default stty
 
 term.setrawmode = function()
@@ -343,7 +337,7 @@ end
 
 term.savemode = function()
 	local fh = io.popen(stty .. " -g")
-	local mode = fh:read('a')
+	local mode = fh:read('*all')
 	local succ, e, msg = fh:close()
 	return succ and mode or nil, e, msg
 end
@@ -352,5 +346,4 @@ term.restoremode = function(mode)
 	return os.execute(stty .. " " .. mode)
 end
 
-return term 
-
+return term
