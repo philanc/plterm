@@ -335,9 +335,16 @@ term.setsanemode = function()
 	return os.execute(stty .. " sane")
 end
 
+-- the string meaning that file:read() should return all the
+-- content of the file is "*a"  for Lua 5.0-5.2 and LuaJIT, 
+-- and "a" for more recent Lua versions 
+-- thanks to Phil Hagelberg for the heads up.
+--
+local READALL = (_VERSION < "Lua 5.3") and "*a" or "a" 
+
 term.savemode = function()
 	local fh = io.popen(stty .. " -g")
-	local mode = fh:read('*all')
+	local mode = fh:read(READALL)
 	local succ, e, msg = fh:close()
 	return succ and mode or nil, e, msg
 end
