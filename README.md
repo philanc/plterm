@@ -23,6 +23,8 @@ The module does not use any other external library.  The only dependency is the 
 ### Functions
 
 ```
+out(...)    -- io.write
+outf(...)   -- io.write, then flush
 clear()     -- clear screen
 cleareol()  -- clear to end of line
 golc(l, c)  -- move the cursor to line l, column c
@@ -44,6 +46,7 @@ input()     -- input iterator (coroutine-based)
 		       return a "next key" function that can be iteratively called 
 			   to read a key (escape sequences returned by function keys 
 			   are parsed)
+			   when keys.mouse is returned, mouse data is returned as additional vals btn, x, y, motion, modifier bits
 rawinput()  -- same, but escape sequences are not parsed.
 getcurpos() -- return the current position of the cursor
 getscrlc()  -- return the dimensions of the screen 
@@ -59,6 +62,7 @@ setrawmode()       -- set the terminal in raw mode
 setsanemode()      -- set the terminal in a default "sane mode"
 savemode()         -- get the current mode as a string
 restoremode(mode)  -- restore a mode saved by savemode()
+setmousemode(mode) -- set terminal mouse support mode to one of mousemode.(off|click|clickanddrag|all)
 
 ```
 
@@ -67,6 +71,33 @@ restoremode(mode)  -- restore a mode saved by savemode()
 A small (and crude!) fileviewer is proposed as an example. See `example/viewfile.lua`.
 
 Usage: 	`lua viewfile.lua filename`
+
+#### Mouse Support
+
+```lua
+term = require 'plterm'
+
+local getkey = term.input()
+local oldmode = term.savemode()
+term.setrawmode()
+term.setmousemode(term.mousemode.click)
+
+local key, btn, x, y, motion, mods = getkey()
+
+-- term.savemode() can't save mouse mode due to stty limitations
+term.setmousemode(term.mousemode.off)
+term.restoremode(oldmode)
+
+if key == term.keys.mouse then
+	print("button clicked: " .. tostring(btn))
+	print("x: " .. tostring(x) .. " y: " .. tostring(y))
+	print("was moving: " .. tostring(motion))
+	print("modifier mask: " .. tostring(mods))
+else
+	print("not a mouse event.")
+	print("key: " .. term.keyname(key))
+end
+```
 
 ### License
 
