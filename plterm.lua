@@ -11,6 +11,8 @@ to save, set and restore tty modes.
 
 Module functions:
 
+out(...)    -- io.write
+outf(...)   -- io.write, then flush
 clear()     -- clear screen
 cleareol()  -- clear to end of line
 golc(l, c)  -- move the cursor to line l, column c
@@ -32,6 +34,7 @@ input()     -- input iterator (coroutine-based)
 		return a "next key" function that can be iteratively called
 		to read a key (escape sequences returned by function keys
 		are parsed)
+		when keys.mouse is returned, mouse data is returned as additional vals btn, x, y, motion, modifier bits
 rawinput()  -- same, but escape sequences are not parsed.
 getcurpos() -- return the current position of the cursor
 getscrlc()  -- return the dimensions of the screen
@@ -47,6 +50,7 @@ setrawmode()       -- set the terminal in raw mode
 setsanemode()      -- set the terminal in a default "sane mode"
 savemode()         -- get the current mode as a string
 restoremode(mode)  -- restore a mode saved by savemode()
+setmousemode(mode) -- set terminal mouse support mode to one of mousemode.(off|click|clickanddrag|all)
 
 License: BSD
 https://github.com/philanc/plterm
@@ -100,6 +104,28 @@ local term={ -- the plterm module
 	reset = function() out("\027c") end,
 }
 
+term.mousemode = {
+	off = 0,
+	click = 1,		-- press and release events
+	clickanddrag = 2, -- press and release events, and motion when buttons held
+	all = 3		   -- press and release events, and all motion events
+}
+
+local mousemode = term.mousemode
+
+-- set mouse mode
+term.setmousemode = function(mode)
+	if mode == mousemode.off then
+		outf("\027[?1000;1002;1003l")
+	elseif mode == mousemode.click then
+		outf("\027[?1000h")
+	elseif mode == mousemode.clickanddrag then
+		outf("\027[?1002h")
+	elseif mode == mousemode.all then
+		outf("\027[?1003h")
+	end
+end
+
 term.colors = {
 	default = 0,
 	-- foreground colors
@@ -141,6 +167,7 @@ term.keys = { -- key code definitions
 	kdown = 0xffec,
 	kleft = 0xffeb,
 	kright = 0xffea,
+	mouse = 0xffe9
 }
 
 local keys = term.keys
@@ -187,6 +214,7 @@ local seq = {
 	['OS'] = keys.kf4,   --xterm
 	['[H'] = keys.khome, --xterm
 	['[F'] = keys.kend,  --xterm
+	['[M'] = keys.mouse, --xterm
 
 	['[[A'] = keys.kf1,  --linux
 	['[[B'] = keys.kf2,  --linux
@@ -231,6 +259,20 @@ term.input = function()
 				s = s .. char(getcode())
 			end
 			if seq[s] then
+				if seq[s] == keys.mouse then
+					btnraw = getcode() - 32
+					x = getcode() - 32
+					y = getcode() - 32
+					btn = (btnraw & 3) + 1
+					-- mouse wheel is btn1/2 with 64 bit set. translate to btn 4/5
+					if (btnraw & 64) ~= 0 then
+						btn = btn + 3
+					end
+					motion = (btnraw & 32) ~= 0
+					mod = (btnraw & 0x1C) >> 2
+					yield(keys.mouse, btn, x, y, motion, mod)
+					goto continue
+				end
 				yield(seq[s])
 				goto continue
 			end
