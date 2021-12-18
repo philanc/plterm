@@ -8,7 +8,7 @@ It does not use ncurses, terminfo or termcap. It uses only very common ANSI sequ
 
 The input function reads and parses the escape sequences sent by function keys (arrows, F1-F12, insert, delete, etc.). See the definitions in `term.keys`.
 
-UTF8 support has been added to this version. The input function also parses UTF8 sequences and returns Unicode character codes.  *To deactivate UTF8 support and restore the same behavior as the previous version: Just set the `UTF8` variable to `false`  at the beginning of `plterm.lua`.*
+> **UTF8 support** has been added to this version. The input function also parses UTF8 sequences and returns Unicode character codes.  *To deactivate UTF8 support and restore the same behavior as the previous version: Just set the `UTF8` variable to `false`  at the beginning of `plterm.lua`.*
 
 This module was initially developed for  [PLE](https://github.com/philanc/ple), my "Pure Lua text Editor". It is embedded at the beginning og PLE, so that the editor can be delivered as a single Lua file.  
 
