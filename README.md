@@ -4,19 +4,17 @@
 
 The module includes all the basic functionnalities to display strings in various colors, move the cursor, erase lines and read keys.
 
-Like [linenoise](https://github.com/antirez/linenoise), it does not use ncurses, terminfo or termcap. It uses only very common ANSI sequences that are supported by (at least) the Linux console, xterm, rxvt and vte-based terminals.
-
-The origin of the term module is some code [contributed](http://lua-users.org/lists/lua-l/2009-12/msg00937.html) by Luiz Henrique de Figueiredo on the Lua mailing list some time ago.
-
-I added some functions for input, getting the cursor position or the screen dimension, and stty-based mode handling .
+It does not use ncurses, terminfo or termcap. It uses only very common ANSI sequences that are supported by (at least) the Linux console, xterm, rxvt and vte-based terminals.
 
 The input function reads and parses the escape sequences sent by function keys (arrows, F1-F12, insert, delete, etc.). See the definitions in `term.keys`.
+
+UTF8 support has been added to this version. The input function also parses UTF8 sequences and returns Unicode character codes.  *To deactivate UTF8 support and restore the same behavior as the previous version: Just set the `UTF8` variable to `false`  at the beginning of `plterm.lua`.*
 
 This module was initially developed for  [PLE](https://github.com/philanc/ple), my "Pure Lua text Editor". It is embedded at the beginning og PLE, so that the editor can be delivered as a single Lua file.  
 
 ### Dependencies
 
-The module is written for and tested with Lua 5.3. It should work with Lua 5.2 but not with older versions (it uses a 'goto' in the input function).
+The module is written for and tested with Lua 5.3. It uses the Lua utf8 standard library.
 
 The module does not use any other external library.  The only dependency is the Unix command `stty` which is used to set the terminal in raw mode (so that keys can be read one at a time when they are pressed).
 

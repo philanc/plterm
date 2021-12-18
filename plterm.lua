@@ -5,9 +5,11 @@
 
 plterm - Pure Lua ANSI Terminal functions - unix only
 
-This module assumes the tty is in raw mode.
-It provides functions based on stty (so available on unix)
-to save, set and restore tty modes.
+This module assumes that 
+	- the terminal supports the common ANSI sequences,
+	- the current tty encoding is UTF-8,
+	- the unix command 'stty' is available (it is used to save 
+	  and restore the tty mode and set the tty in raw mode).
 
 Module functions:
 
@@ -29,10 +31,10 @@ restore()   -- save and restore the position of the cursor
 reset()     -- reset the terminal (colors, cursor position)
 
 input()     -- input iterator (coroutine-based)
-		return a "next key" function that can be iteratively called
-		to read a key (escape sequences returned by function keys
-		are parsed)
-rawinput()  -- same, but escape sequences are not parsed.
+	       return a "next key" function that can be iteratively
+	       called to read a key (UTF8 sequences and escape 
+	       sequences returned by function keys are parsed)
+rawinput()  -- same, but UTF8 and escape sequences are not parsed.
 getcurpos() -- return the current position of the cursor
 getscrlc()  -- return the dimensions of the screen
                (number of lines and columns)
@@ -57,9 +59,22 @@ https://en.wikipedia.org/wiki/ANSI_escape_code
 
 ]]
 
+-- if UTF8 below is true, the module assumes that the terminal supports
+-- UTF8.  If false, it assumes that the terminal uses an 8-bit encoding 
+-- where each character is encoded as one 8-bit byte (eg Latin-1 or 
+-- other ISO-8859 encodings).
+-- It doesn't make a difference except for the input() and keyname()
+-- functions.
+
+-- local UTF8 = false -- 8-bit encoding (eg. ISO-8859 encodings)
+local UTF8 = true  -- UTF8 encoding
+
+if UTF8 then local utf8 = require "utf8" end
+
 -- some local definitions
 
 local byte, char, yield = string.byte, string.char, coroutine.yield
+
 
 ------------------------------------------------------------------------
 
@@ -75,7 +90,6 @@ end
 -- http://lua-users.org/lists/lua-l/2009-12/msg00942.html
 
 local term={ -- the plterm module
-
 	out = out,
 	outf = outf,
 	clear = function() out("\027[2J") end,
@@ -204,63 +218,87 @@ local getcode = function() return byte(io.read(1)) end
 term.input = function()
 	-- return a "read next key" function that can be used in a loop
 	-- the "next" function blocks until a key is read
-	-- it returns ascii code for all regular keys, or a key code
-	-- for special keys (see term.keys)
-	-- (this function assume the tty is already in raw mode)
+	-- it returns ascii or unicode code for all regular keys, 
+	-- or a key code for special keys (see term.keys)
 	return coroutine.wrap(function()
-		local c, c1, c2, ci, s
-		while true do
-			c = getcode()
-			if c ~= ESC then -- not a seq, yield c
-				yield(c)
-				goto continue
-			end
-			c1 = getcode()
-			if c1 == ESC then -- esc esc [ ... sequence
-				yield(ESC)
-				-- here c still contains ESC, read a new c1
-				c1 = getcode() -- and carry on ...
-			end
-			if c1 ~= LBR and c1 ~= LETO then -- not a valid seq
+	  local c, c1, c2, ci, s, u
+	  while true do
+		c = getcode()
+		::restart::
+		if UTF8 and (c & 0xc0 == 0xc0) then 
+			-- utf8 sequence start
+			u = c & 0x3f
+			while true do
+				c = getcode()
+				if c & 0xc0 == 0x80 then 
+					-- more utf8 bytes
+					u = (u << 6) | (c & 0x3f)
+				elseif c & 0xc0 == 0xc0 then 
+					-- another utf8 seq start
+					yield(u)
+					u = c & 0x3f
+				else 
+					yield(u)
+					break
+				end
+			end -- while utf8 bytes
+		end -- end utf8 sequence. continue with c.
+		if c ~= ESC then -- not an esc sequence, yield c
+			yield(c)
+			goto continue
+		end
+		c1 = getcode()
+		if c1 == ESC then -- esc esc [ ... sequence
+			yield(ESC)
+			-- here c still contains ESC, read a new c1
+			c1 = getcode() -- and carry on ...
+		end
+		if c1 ~= LBR and c1 ~= LETO then -- not a valid seq
+			if UTF8 then
+			-- c1 maybe the beginning of an utf8 seq...
+				yield(c) ; c = c1 ; goto restart
+			else
 				yield(c) ; yield(c1)
 				goto continue
 			end
-			c2 = getcode()
-			s = char(c1, c2)
-			if c2 == LBR then -- esc[[x sequences (F1-F5 in linux console)
-				s = s .. char(getcode())
-			end
-			if seq[s] then
-				yield(seq[s])
-				goto continue
-			end
-			if not isdigitsc(c2) then
-				yield(c) ; yield(c1) ; yield(c2)
-				goto continue
-			end
-			while true do
-				ci = getcode()
-				s = s .. char(ci)
-				if ci == TIL then
-					if seq[s] then
-						yield(seq[s])
-						goto continue
-					else
-						-- valid but unknown sequence - ignore it
-						yield(keys.unknown)
-						goto continue
-					end
-				end
-				if not isdigitsc(ci) then
-					-- not a valid seq. return all the chars
-					yield(ESC)
-					for i = 1, #s do yield(byte(s, i)) end
+		end
+		c2 = getcode()
+		s = char(c1, c2)
+		if c2 == LBR then -- esc[[x sequences (F1-F5 in linux console)
+			s = s .. char(getcode())
+		end
+		if seq[s] then
+			yield(seq[s])
+			goto continue
+		end
+		if not isdigitsc(c2) then
+			yield(c) ; yield(c1) ; yield(c2)
+			goto continue
+		end
+		while true do -- read until tilde '~'
+			ci = getcode()
+			s = s .. char(ci)
+			if ci == TIL then
+				if seq[s] then
+					yield(seq[s])
+					goto continue
+				else
+					-- valid but unknown sequence
+					-- ignore it
+					yield(keys.unknown)
 					goto continue
 				end
-			end--while
-			-- assume c is a regular char, return its ascii code
-			::continue::
-		end
+			end
+			if not isdigitsc(ci) then
+				-- not a valid seq. 
+				-- return all the chars
+				yield(ESC)
+				for i = 1, #s do yield(byte(s, i)) end
+				goto continue
+			end
+		end--while read until tilde '~'
+		::continue::
+	  end--coroutine while loop
 	end)--coroutine
 end--input()
 
@@ -310,11 +348,19 @@ end
 
 term.keyname = function(c)
 	for k, v in pairs(keys) do
-		if c == v then return k end
+		if c == v then 
+			return k 
+		end
 	end
 	if c < 32 then return "^" .. char(c+64) end
-	if c < 256 then return char(c) end
-	return tostring(c)
+	-- utf8
+	if UTF8 then
+		return utf8.char(c)
+	elseif c < 256 then 
+		return char(c) 
+	else 
+		return tostring(c)
+	end
 end
 
 ------------------------------------------------------------------------
