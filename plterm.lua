@@ -227,21 +227,31 @@ term.input = function()
 		::restart::
 		if UTF8 and (c & 0xc0 == 0xc0) then 
 			-- utf8 sequence start
-			u = c & 0x3f
-			while true do
+			if c & 0x20 == 0 then -- 2-byte seq
+				u = c & 0x1f
 				c = getcode()
-				if c & 0xc0 == 0x80 then 
-					-- more utf8 bytes
-					u = (u << 6) | (c & 0x3f)
-				elseif c & 0xc0 == 0xc0 then 
-					-- another utf8 seq start
-					yield(u)
-					u = c & 0x3f
-				else 
-					yield(u)
-					break
-				end
-			end -- while utf8 bytes
+				u = (u << 6) | (c & 0x3f)
+				yield(u)
+				goto continue
+			elseif c & 0xf0 == 0xe0 then -- 3-byte seq
+				u = c & 0x0f
+				c = getcode()
+				u = (u << 6) | (c & 0x3f)
+				c = getcode()
+				u = (u << 6) | (c & 0x3f)
+				yield(u)
+				goto continue
+			else -- assume it is a 4-byte seq
+				u = c & 0x07
+				c = getcode()
+				u = (u << 6) | (c & 0x3f)
+				c = getcode()
+				u = (u << 6) | (c & 0x3f)
+				c = getcode()
+				u = (u << 6) | (c & 0x3f)
+				yield(u)
+				goto continue
+			end
 		end -- end utf8 sequence. continue with c.
 		if c ~= ESC then -- not an esc sequence, yield c
 			yield(c)
